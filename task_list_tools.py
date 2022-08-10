@@ -18,6 +18,7 @@ run_list = []
 
 # Cell feedback
 def cell_feedback():
+    print(" ")
     print("Cell ran at:")
     tz_east = pytz.timezone('US/Eastern') 
     datetime_eastern = datetime.now(tz_east)
@@ -149,7 +150,7 @@ def get_task_list_file_and_validate():
         xl_file[i] = xl_file[i][xl_file[i]['Task Name'].str.contains("end of list")==False]
         xl_file[i]['sheet_name'] = i
         df = df.append(xl_file[i])
-        file_len = len(xl_file[i][1:])
+        file_len = len(xl_file[i][0:])
         print(colored(file_len,'cyan') + f" rows in {i}")
         sheet_len = sheet_len+file_len
 
@@ -213,6 +214,7 @@ def get_task_list_file_and_validate():
             df[i] = df[i].str.replace("'", "")
             df[i] = df[i].str.replace('"', "")
             df[i] = df[i].str.replace('’', "") # special apostrophe
+            df[i] = df[i].str.replace('–', "-") # Special hyphen
             df[i] = df[i].str.replace(r'”', "") # special quotations
             df[i] = df[i].str.replace(r'“', "") # special quotations
             df[i] = df[i].str.replace("\r", " - ")
@@ -355,10 +357,31 @@ def get_task_list_file_and_validate():
     # df = df.sort_values(['Task List Name', 'Task Description', 'Task or Notification?']).reset_index(drop=True) # Don't know if I should sort these values. 
     run_list.append('1. FILE')
 
+    if len(df[df['Applies to Buyer/Seller'] == 'BOTH (B&S)'])>0:
+        print(colored("Some task lists have 'Applies to Buyer/Seller' set as 'Both (B&S)'", 'yellow', attrs =['bold']))
+
+        df_both = df[df['Applies to Buyer/Seller'] == 'BOTH (B&S)']
+        df_both.loc[df_both['Applies to Buyer/Seller'] == 'BOTH (B&S)', 'Applies to Buyer/Seller'] = 'b'
+        df_both['Buyer/Seller code'] = df_both['Applies to Buyer/Seller']
+        df.loc[df['Applies to Buyer/Seller'] == 'BOTH (B&S)', 'Applies to Buyer/Seller'] = 's'
+        df['Buyer/Seller code'] = df['Applies to Buyer/Seller']
+
+        df = df.append(df_both)
+
+        if len(df[df['Applies to Buyer/Seller'] == 'BOTH (B&S)'])>0:
+            print(colored("ERROR:", 'red', attrs = ['bold']) + " Could not process 'Applies to Buyer/Seller' values set as 'Both (B&S)'")
+        else:
+            print(colored("'Applies to Buyer/Seller' set as 'Both (B&S)' has been processed", 'green', attrs=['bold']))
+
+            print(colored("Row values are now as follows:", 'green'))
+            print(df[['Task List Name', 'Applies to Buyer/Seller']].value_counts())
+            print(colored("Total Rows: ", 'green'), df[['Task List Name', 'Applies to Buyer/Seller']].value_counts().sum())
+       
+    else:
+        print('Applies to Buyer/Seller is good.')
+        pass
 
 
-    # Cell feedback
-    cell_feedback()
     return team_id, team_name, df
 
 
@@ -376,8 +399,7 @@ def get_task_lists(team_id):
 
     run_list.append('2. Task List From Sisu')
 
-    # Cell feedback
-    cell_feedback()
+
 
     return task_list_sql_text
 
@@ -404,8 +426,6 @@ def retrieve_current_task_lists_data(df):
     else:
         pass
 
-    # Cell feedback
-    #cell_feedback()
 
     return df_reset_1, current_task_list_names
 
@@ -417,9 +437,6 @@ def task_list_feedback(df, current_task_list_names):
     final_task_list_count = len(current_task_list_names)+len((df['Task List Name']+' '+df['List Description']+' '+df['Buyer/Seller code']).unique())
     print(colored(f"{final_task_list_count} ", 'cyan') + "Total Task Lists")
     # Clean and add columns for the SQL insert.
-
-    # Cell feedback
-    cell_feedback()
 
     return final_task_list_count
 
@@ -437,9 +454,6 @@ def adding_columns(df, team_id):
     df['status_trigger'] = ''
     print(colored("status_trigger", 'cyan') + " column added.")
 
-
-    # Cell feedback
-    cell_feedback()
 
     return df, team_id
 
@@ -464,10 +478,6 @@ def define_client_task_list(df, current_task_list_names, final_task_list_count):
     else:
         print(colored('ERROR: Final display order does NOT equal the expected Final Task List count.', 'red', attrs=['bold']))
 
-
-
-    # Cell feedback
-    # cell_feedback()
 
     return df_client_task_list, client_task_list_cols_order
 
@@ -494,8 +504,6 @@ def insert_task_lists(df, df_client_task_list, team_id):
     run_list.append('3. Insert Task Lists')
 
 
-    # Cell feedback
-    cell_feedback()
 
     return df, df_client_task_list, task_list_insert_statement + "\n" +  string.replace("\n (", "\n(").strip()[:-1] + ";"
 
@@ -515,9 +523,6 @@ def  get_task_blueprints(team_id):
     run_list.append('4. Tasks From Sisu')
 
 
-    # Cell feedback
-    cell_feedback()
-
     return task_blueprint_sql_text
 
 
@@ -534,8 +539,6 @@ def retrieve_task_blueprints():
         pass
 
 
-    # Cell feedback
-    # cell_feedback()
 
     return current_task_blueprint
 
@@ -552,8 +555,6 @@ def task_blueprint_feedback(df, current_task_blueprint):
     client_task_blueprint_cols = ['Team ID', 'Task Name', 'Task Description', 'Task or Notification?', 'display_order', 'Trigger Date DB (Sisu)', 'Days', 'Status', 'client_type_id', 'created_ts', 'updated_ts', 'assign_to']
 
 
-    # Cell feedback
-    cell_feedback()
 
     return client_task_blueprint_cols, final_task_name_count, new_task_count
 
@@ -573,8 +574,6 @@ def get_agent_info(team_id):
     run_list.append('5. Process Tasks and Get Agent Info From Sisu')
 
 
-    # Cell feedback
-    cell_feedback()
 
     return agent_info_sql_text
 
@@ -605,8 +604,6 @@ def process_agent_info(df, client_task_blueprint_cols):
     else:
         pass
 
-    # Cell feedback
-    # cell_feedback()
 
     df_assign_map['name'] = df_assign_map['first_name'].str.strip() + " " + df_assign_map['last_name'].str.strip()
     df_assign_map['agent_key'] = 'A'
@@ -652,8 +649,7 @@ def insert_task_blueprints(df_client_task_blueprints, team_id):
 
     run_list.append('6. Insert Tasks')
 
-    # Cell feedback
-    cell_feedback()
+
 
     return task_blueprints_insert_statement + "\n" +  string.replace("\n (", "\n(").strip()[:-1] + ";"
 
@@ -675,8 +671,7 @@ def get_task_list_mathcup_data(team_id):
 
     run_list.append("7. Get Task List Matchup")
 
-    # Cell feedback
-    cell_feedback()
+
 
     return matchup_sql_text_1
 
@@ -693,8 +688,7 @@ def retrieve_task_list_matchup_data():
     df_matchup_task_lists = pd.read_clipboard()
     # df_matchup_task_lists = df_matchup_task_lists[df_matchup_task_lists['task_list_id'].notna()]
 
-    # Cell feedback
-    cell_feedback()
+
 
     return df_matchup_task_lists
 
@@ -724,8 +718,7 @@ def get_task_blueprint_matchup_data(team_id):
 
     run_list.append('8. Get Task Matchup')
 
-    # Cell feedback
-    cell_feedback()
+
 
 
 def retrieve_task_blueprint_matchup_data(df):
@@ -742,8 +735,7 @@ def retrieve_task_blueprint_matchup_data(df):
 
     df_matchup_task_blueprint = pd.read_clipboard()
 
-    # Cell feedback
-    cell_feedback()
+
 
     return df_reset_3, df_matchup_task_blueprint
 
@@ -764,8 +756,7 @@ def clean_and_process_matchup_data(df, df_matchup_task_blueprint, df_matchup_tas
     df_matchup_task_lists = df_matchup_task_lists.fillna('')
     df_matchup_task_blueprint = df_matchup_task_blueprint.fillna('')
 
-    # Cell feedback
-    # cell_feedback()
+
 
     return df, df_matchup_task_lists, df_matchup_task_blueprint
 
@@ -781,8 +772,9 @@ def merge_and_remove_duplicated_tasks(df_matchup_task_blueprint, df, df_matchup_
         print("Number of duplications: ", len(df_merge_check)/new_task_count)
     
     merge_check_columns = df_merge_check.columns[~df_merge_check.columns.str.contains('task_list_id|task_blueprint_id')]
+
     return df_merge_check[merge_check_columns].drop_duplicates(keep='last').merge(df_merge_check[['task_list_id', 'task_blueprint_id']], left_index = True, right_index = True)
-    
+
 
 
 def test_merge(new_task_count, df_matchup_task_blueprint, df_matchup_task_lists, df):
@@ -823,8 +815,7 @@ def test_merge(new_task_count, df_matchup_task_blueprint, df_matchup_task_lists,
     # display(df_merge_check[merge_check_columns].drop_duplicates().merge(df_merge_check[['task_list_id', 'task_blueprint_id']], left_index = True, right_index = True))
     # display(df_merge_funct_test)
 
-    # Cell feedback
-    cell_feedback()
+
 
 
 
@@ -840,8 +831,7 @@ def merge_data(df_matchup_task_blueprint, df, df_matchup_task_lists, new_task_co
 
     df = df.reset_index(drop = True)
 
-    # Cell feedback
-    cell_feedback()
+
 
     return df, df_reset_4
 
@@ -856,6 +846,7 @@ def validate_merge(df):
         
     else:
         df['task_list_id'] = df['task_list_id'].astype(int)
+        print(colored("No Null values for Task List ID", 'green'))
 
 
 
@@ -866,9 +857,9 @@ def validate_merge(df):
     else:
         
         df['task_blueprint_id'] = df['task_blueprint_id'].astype(int)
+        print(colored("No Null values for Task Blueprint ID", 'green'))
 
-    # Cell feedback
-    cell_feedback()
+
 
 def create_merge_insert_statement(df, team_id):
     df['task_list_id'] = df['task_list_id'].astype(int)
@@ -896,8 +887,7 @@ def create_merge_insert_statement(df, team_id):
 
     run_list.append('9. Process and Insert Matchup')
 
-    # Cell feedback
-    cell_feedback()
+
 
     return task_list_blueprints_matchup_insert_statement + "\n" +  string.replace("\n (", "\n(").strip()[:-1] + ";"
 
@@ -912,7 +902,7 @@ def create_summary(current_task_list_names, current_task_blueprint, df):
         'Total Task List Count': [len(current_task_list_names) + len(df['Task List Name'].unique())],
         'Initial Task Count' : [len(current_task_blueprint)],
         'New Task Count': [len(df)],
-        'Total Task Count': [len(current_task_blueprint) + len(df)]
+        'Total Task Count': [len(current_task_blueprint) + len(df)+ ' \n']
     }
     df_summary = pd.DataFrame.from_dict(summary_data)
 
@@ -922,6 +912,3 @@ def create_summary(current_task_list_names, current_task_blueprint, df):
     print(df_summary.T.reset_index().rename(columns = {'index':'Subject', 0:'Count'}).to_markdown(index = False))
 
     run_list.append('10. Summary')
-
-    # Cell feedback
-    cell_feedback()
