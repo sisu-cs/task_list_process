@@ -1,5 +1,3 @@
-# library
-
 import os
 from termcolor import colored
 import pwd # needed if the document is stored on computer instead of Google Drive
@@ -904,7 +902,7 @@ def create_summary(current_task_list_names, current_task_blueprint, df):
         'Total Task List Count': [len(current_task_list_names) + len(df['Task List Name'].unique())],
         'Initial Task Count' : [len(current_task_blueprint)],
         'New Task Count': [len(df)],
-        'Total Task Count': [len(current_task_blueprint) + len(df)+ ' \n']
+        'Total Task Count': [len(current_task_blueprint) + len(df)]
     }
     df_summary = pd.DataFrame.from_dict(summary_data)
 
