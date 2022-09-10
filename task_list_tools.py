@@ -197,6 +197,7 @@ def get_task_list_file_and_validate():
     else:
         pass
 
+    
 
 
 
@@ -301,6 +302,10 @@ def get_task_list_file_and_validate():
         print(colored('THE FOLLOWING TASKS ARE MISSING ASSINEE:', 'red', attrs=['bold']) + f" TOTAL: {len(df[df['Assign to TC, Agent or assignee full name'].isna()])}")
         with pd.option_context("display.max_rows", 1000):  
             print(tabulate(df[df['Assign to TC, Agent or assignee full name'].isna()][['sheet_name','Task Name']]))
+
+    df['Assign To T/A/Agent ID'] = df['Assign To T/A/Agent ID'].replace('', np.nan)
+    if len(df[df['Assign To T/A/Agent ID'].isna()]) > 0 and len(df['Assign To T/A/Agent ID']) != len(df['Assign to TC, Agent or assignee full name']):
+        print(colored("ERROR: ", 'red', attrs = ['bold']) + "Assign To T/A/Agent ID not populating in the template.")
 
     df['Task or Notification?'] = df['Task or Notification?'].replace({'':np.nan})
     if len(df[(df['Task or Notification?'].isna()) | (df['Task or Notification?'].str.contains('T|N')==False)])>0:
