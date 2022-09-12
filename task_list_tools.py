@@ -323,7 +323,7 @@ def get_task_list_file_and_validate():
     if len(df[df['Buyer/Seller code'].str.contains("b|s")]) == len(df):
         pass
     else:
-        print(colored("WARNING:", 'red', attrs = ['bold']) +  f" {len(df) - len(df[df['Buyer/Seller code'].str.contains('b|s')])} Buyer/Seller code contains incorrect characters.")
+        print(colored("WARNING:", 'yellow', attrs = ['bold']) +  f" {len(df) - len(df[df['Buyer/Seller code'].str.contains('b|s')])} Buyer/Seller code contains incorrect characters.")
         print(" ")
 
 
@@ -345,16 +345,27 @@ def get_task_list_file_and_validate():
 
     # Check for duplicates
     if len(df[df.duplicated()]>0):
-        print(colored("WARNING: ", 'red', attrs=['bold']) + "Duplicates found in data.")
+        print(colored("WARNING: ", 'yellow', attrs=['bold']) + "Duplicates found in data.")
+        print(" ")
     else:
         print(colored("GOOD: ", 'green', attrs=['bold']) + "NO duplicates found in data.")
+        print(" ")
 
     # Check that all tasks have an associated trigger date
     if len(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")])>0:
         print(colored('DATA ERROR: ', 'red', attrs = ['bold']) + "Some tasks do not have associated trigger dates.")
         print(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")]['Task Name'])
+        print(" ")
     else:
         pass
+
+    if len(df[df['Trigger Date DB (Sisu)'].notna()]) < len(df):
+        print(colored('ERROR: ', 'red', attrs=['bold']) + "Trigger dates are custom and were pasted into template.")
+    elif len(df['Trigger Date DB (Sisu)']!="")>0:
+        print(colored('ERROR: ', 'red', attrs=['bold']) + "Trigger dates are custom and were pasted into template.")
+    else:
+        pass
+
     
 
     print(" ")
