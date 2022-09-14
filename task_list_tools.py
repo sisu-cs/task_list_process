@@ -299,9 +299,10 @@ def get_task_list_file_and_validate():
 
     df['Assign to TC, Agent or assignee full name'] = df['Assign to TC, Agent or assignee full name'].replace({'':np.nan})
     if len(df[(df['Assign to TC, Agent or assignee full name'].isna()) & (df['Task or Notification?'] == 'T')])>0:
-        print(colored('THE FOLLOWING TASKS ARE MISSING ASSINEE:', 'red', attrs=['bold']) + f" TOTAL: {len(df[df['Assign to TC, Agent or assignee full name'].isna()])}")
+        print(colored('THE FOLLOWING TASKS ARE MISSING ASSIGNEE:', 'red', attrs=['bold']) + f" TOTAL: {len(df[df['Assign to TC, Agent or assignee full name'].isna()])}")
         with pd.option_context("display.max_rows", 1000):  
-            print(tabulate(df[df['Assign to TC, Agent or assignee full name'].isna()][['sheet_name','Task Name']]))
+            # print(tabulate(df[df['Assign to TC, Agent or assignee full name'].isna()][['sheet_name','Task Name']]))
+            print(df[df['Assign to TC, Agent or assignee full name'].isna()][['sheet_name','Task Name']].to_markdown(index = True))
 
     df['Assign To T/A/Agent ID'] = df['Assign To T/A/Agent ID'].replace('', np.nan)
     if len(df[df['Assign To T/A/Agent ID'].isna()]) > 0 and len(df['Assign To T/A/Agent ID']) != len(df['Assign to TC, Agent or assignee full name']):
@@ -311,8 +312,8 @@ def get_task_list_file_and_validate():
     if len(df[(df['Task or Notification?'].isna()) | (df['Task or Notification?'].str.contains('T|N')==False)])>0:
         print(colored('THE FOLLOWING TASKS ARE MISSING, OR HAVE INCORRECT, "Task or Notification?" INFORMATION:', 'red', attrs=['bold']) + f" TOTAL: {len(df[(df['Task or Notification?'].isna()) | (df['Task or Notification?'].str.contains('T|N')==False)])}")
         with pd.option_context("display.max_rows", 1000):
-            print(tabulate(df[(df['Task or Notification?'].isna()) | (df['Task or Notification?'].str.contains('T|N')==False)][['sheet_name','Task Name']]))
-
+            # print(tabulate(df[(df['Task or Notification?'].isna()) | (df['Task or Notification?'].str.contains('T|N')==False)][['sheet_name','Task Name']]))
+            print(df[(df['Task or Notification?'].isna()) | (df['Task or Notification?'].str.contains('T|N')==False)][['sheet_name','Task Name']].to_markdown(index = True))
     # Corrects current Task List Template's Buyer/Seller code to match legacy version
     if version == 'current':
         df['Applies to Buyer/Seller'] = df['Applies to Buyer/Seller'].str.upper()
@@ -352,17 +353,22 @@ def get_task_list_file_and_validate():
         print(" ")
 
     # Check that all tasks have an associated trigger date
+    trigger_length = len(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")])
     if len(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")])>0:
-        print(colored('DATA ERROR: ', 'red', attrs = ['bold']) + "Some tasks do not have associated trigger dates.")
-        print(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")]['Task Name'])
+        print(colored('DATA ERROR: ', 'red', attrs = ['bold']) + "Some tasks do not have associated trigger dates. " + f"TOTAL: {trigger_length}")
+        print(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")][['sheet_name','Task Name']].to_markdown(index = True))
         print(" ")
     else:
         pass
 
-    if len(df[df['Trigger Date DB (Sisu)'].notna()]) < len(df):
+    if len(df[df['Trigger Date DB (Sisu)'].isna()]) > 0:
         print(colored('ERROR: ', 'red', attrs=['bold']) + "Trigger dates are custom and were pasted into template.")
-    elif len(df['Trigger Date DB (Sisu)']!="")>0:
-        print(colored('ERROR: ', 'red', attrs=['bold']) + "Trigger dates are custom and were pasted into template.")
+        # print(tabulate(df[df['Trigger Date DB (Sisu)'].isna()][['sheet_name','Task Name']]))
+        print(df[df['Trigger Date DB (Sisu)'].isna()][['sheet_name','Task Name']].to_markdown(index = True))
+    # elif len(df['Trigger Date DB (Sisu)']=="") > 0:
+    #     print(colored('ERROR: ', 'red', attrs=['bold']) + "Trigger dates are custom and were pasted into template.")
+    #     # print(tabulate(df[df['Trigger Date DB (Sisu)']==""][['sheet_name','Task Name']]))
+    #     print(df[df['Trigger Date DB (Sisu)']==""][['sheet_name','Task Name']].to_markdown(index = True))
     else:
         pass
 
