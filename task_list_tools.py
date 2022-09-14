@@ -355,7 +355,7 @@ def get_task_list_file_and_validate():
     # Check that all tasks have an associated trigger date
     trigger_length = len(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")])
     if len(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")])>0:
-        print(colored('DATA ERROR: ', 'red', attrs = ['bold']) + "Some tasks do not have associated trigger dates. " + f"TOTAL: {trigger_length}")
+        print(colored('Warning: ', 'yellow', attrs = ['bold']) + "Some tasks do not have associated trigger dates. " + f"TOTAL: {trigger_length}")
         print(df[(df['Task Name']!="") & (df['Task Trigger date \n(Relative due date)']=="")][['sheet_name','Task Name']].to_markdown(index = True))
         print(" ")
     else:
