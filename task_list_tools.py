@@ -860,7 +860,7 @@ def merge_data(df_matchup_task_blueprint, df, df_matchup_task_lists, new_task_co
     return df, df_reset_4
 
 
-def validate_merge(df):
+def validate_merge(df, df_matchup_task_blueprint):
 
     # Validate matchup values (and make sure the id values are integers)
 
@@ -875,8 +875,19 @@ def validate_merge(df):
 
 
     if len(df[df['task_blueprint_id'].isna()]) > 0:
-        print(colored("ERROR: ", 'red', attrs=['bold']) + "Missing " + colored("task_blueprint_id", 'cyan') + " for the following Tasks:")
-        print(df[df['task_blueprint_id'].isna()]['Task Name'])
+        # print(colored("ERROR: ", 'red', attrs=['bold']) + "Missing " + colored("task_blueprint_id", 'cyan') + " for the following Tasks:")
+        # print(df[df['task_blueprint_id'].isna()]['Task Name'])
+
+        if len(df[df['task_blueprint_id'].isna()]['display_order'].unique()) == len(df[df['task_blueprint_id'].isna()]):
+            for i in df[df['task_blueprint_id'].isna()]['display_order']:
+            # print(df_matchup_task_blueprint[df_matchup_task_blueprint['display_order']==i]['task_blueprint_id'].to_list()[0])
+                df.loc[df['display_order']==i, 'task_blueprint_id'] = df_matchup_task_blueprint[df_matchup_task_blueprint['display_order']==i]['task_blueprint_id'].to_list()[0]
+
+            print(colored("No Null values for Task Blueprint ID", 'green'))
+            
+        else:
+            print(colored("ERROR: ", 'red', attrs=['bold']) + "Missing " + colored("task_blueprint_id", 'cyan') + " for the following Tasks. Corrections with display order could not be made. Requires manual correction:")
+            print(df[df['task_blueprint_id'].isna()]['Task Name'])
         
     else:
         
