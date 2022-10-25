@@ -571,6 +571,7 @@ def task_blueprint_feedback(df, current_task_blueprint):
     new_task_count = len(df)
     print(colored(f"{len(current_task_blueprint)} ", 'cyan') + "Current Tasks")
     print(colored(f"{len(df)} ", 'cyan') + "New Tasks")
+    
 
     final_task_name_count = len(current_task_blueprint)+len(df)
     print(colored(f"{final_task_name_count} ", 'cyan') + "Total Tasks")
@@ -578,7 +579,7 @@ def task_blueprint_feedback(df, current_task_blueprint):
     '''Task names, types, display_orders, and descriptions'''
     client_task_blueprint_cols = ['Team ID', 'Task Name', 'Task Description', 'Task or Notification?', 'display_order', 'Trigger Date DB (Sisu)', 'Days', 'Status', 'client_type_id', 'created_ts', 'updated_ts', 'assign_to']
 
-
+    print(" ")
 
     return client_task_blueprint_cols, final_task_name_count, new_task_count
 
@@ -602,7 +603,21 @@ def get_agent_info(team_id):
     return agent_info_sql_text
 
 
-def process_agent_info(df, client_task_blueprint_cols):
+def capture_agent_info_and_check(df):
+    df_agents = pd.read_clipboard()
+    df_agents['full_name'] = df_agents['first_name'] + " " + df_agents['last_name']
+    df_agents_2 = df_agents.copy().append(pd.DataFrame.from_dict({'full_name' : ['TC', 'Agent', 'ISA', 'RECRUITER COORDINATOR', 'RECRUITER (recruit platform)']}))
+    if len(df[~df['Assign to TC, Agent or assignee full name'].isin(df_agents_2['full_name'])]['Assign to TC, Agent or assignee full name'].unique()) > 0:
+        print(colored("STOP!! ", 'red', attrs = ['bold']), "This data has users that are not yet imported into SISU.")
+        print(df[~df['Assign to TC, Agent or assignee full name'].isin(df_agents_2['full_name'])]['Assign to TC, Agent or assignee full name'].value_counts())
+        print(df[~df['Assign to TC, Agent or assignee full name'].isin(df_agents_2['full_name'])]['Assign to TC, Agent or assignee full name'].value_counts().sum(), 'total tasks affected.')
+    else:
+        pass
+    print(" ")
+    return df_agents
+
+
+def process_agent_info(df, df_agents, client_task_blueprint_cols):
 
     # Cell Name: Insert Tasks
 
@@ -622,7 +637,8 @@ def process_agent_info(df, client_task_blueprint_cols):
         'agent_key' : ['T', 'A', 'I', 'T', 'A']
     })
 
-    df_assign_map = pd.read_clipboard()
+    # df_assign_map = pd.read_clipboard()
+    df_assign_map = df_agents
     if len(df_assign_map) == 0:
         df_assign_map = pd.DataFrame(columns = ['first_name', 'last_name', 'agent_id'])
     else:
